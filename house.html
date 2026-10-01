@@ -7,7 +7,7 @@
 <meta name="description" content="Интерактивный дом VION: кафе, мастерская KAER, игровая и лаборатория — наведите или нажмите на предмет, чтобы перейти в нужный раздел.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Astrum&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
 <style>
 /* a single frontal "dollhouse" cutaway of each floor; an info rail beside it answers what each clicked object leads to — committed warm-wood world */
@@ -114,7 +114,7 @@
       <nav>
         <ul class="nav-links">
           <li><a href="journal.html">Дневник</a></li>
-          <li><a href="science.html">Наука</a></li>
+          <li><a href="science.html">Статьи</a></li>
           <li><a href="research.html">Исследования</a></li>
           <li><a href="projects.html">Проекты</a></li>
           <li><a href="candles.html">Мастерская</a></li>
@@ -174,11 +174,28 @@
               <rect x="0" y="0" width="1200" height="700" fill="var(--wall)"/>
               <rect x="0" y="0" width="1200" height="470" fill="var(--wall-dark)" opacity="0.25"/>
               <rect x="0" y="0" width="585" height="470" fill="url(#poppyWall)"/>
-              <rect x="0" y="470" width="1200" height="230" fill="var(--floor)"/>
-              <g stroke="var(--floor-line)" stroke-width="2" opacity="0.6">
-                <line x1="0" y1="520" x2="1200" y2="520"/>
-                <line x1="0" y1="580" x2="1200" y2="580"/>
-                <line x1="0" y1="640" x2="1200" y2="640"/>
+              <rect x="0" y="470" width="585" height="230" fill="#7a5a36"/>
+              <g stroke="#5f4526" stroke-width="2" opacity="0.6">
+                <line x1="0" y1="520" x2="585" y2="520"/>
+                <line x1="0" y1="580" x2="585" y2="580"/>
+                <line x1="0" y1="640" x2="585" y2="640"/>
+              </g>
+              <g>
+                <rect x="95" y="500" width="400" height="165" rx="4" fill="#7c3f3a"/>
+                <rect x="95" y="500" width="400" height="165" rx="4" fill="none" stroke="var(--brass)" stroke-width="3"/>
+                <rect x="113" y="515" width="364" height="135" rx="2" fill="none" stroke="var(--brass)" stroke-width="1.5" opacity="0.75"/>
+                <g fill="var(--brass)" opacity="0.5">
+                  <circle cx="295" cy="582" r="10"/>
+                  <circle cx="200" cy="582" r="6"/>
+                  <circle cx="390" cy="582" r="6"/>
+                </g>
+              </g>
+
+              <rect x="615" y="470" width="585" height="230" fill="#b3c4cd"/>
+              <g stroke="#8fa3b0" stroke-width="1.5" opacity="0.55" fill="none">
+                <path d="M630 520 Q760 540 860 515 T1180 530"/>
+                <path d="M640 580 Q780 560 900 585 T1190 575"/>
+                <path d="M625 640 Q770 625 920 645 T1180 635"/>
               </g>
 
               <rect x="585" y="0" width="30" height="700" fill="var(--wood)"/>
@@ -291,7 +308,7 @@
                 <text class="chip" x="425" y="321" text-anchor="middle">Витрина свечей</text>
               </g>
 
-              <text x="900" y="100" text-anchor="middle" font-family="Cinzel, serif" font-size="30" font-weight="600" fill="var(--cream)">Кафе VION</text>
+              <text x="900" y="100" text-anchor="middle" font-family="Cinzel, serif" font-size="30" font-weight="600" fill="var(--cream)">Кафе</text>
               <text x="900" y="122" text-anchor="middle" font-size="12" letter-spacing="2" fill="#bcd4bf">РЕЦЕПТЫ &middot; ЖУРНАЛ</text>
 
               <g class="hotspot" tabindex="0" role="button" data-href="journal.html"
@@ -372,15 +389,16 @@
                  data-title="Вход"
                  data-desc="Возвращает на главную страницу VION."
                  data-target="Главная">
-                <rect class="pick" x="520" y="480" width="160" height="190"/>
-                <ellipse cx="600" cy="672" rx="70" ry="14" fill="#3a2a1c" opacity="0.4"/>
+                <rect class="pick" x="520" y="280" width="160" height="200"/>
+                <ellipse cx="600" cy="471" rx="70" ry="9" fill="#2a1d12" opacity="0.35"/>
                 <g class="lift">
-                  <rect x="540" y="500" width="120" height="170" fill="var(--green)"/>
-                  <rect x="540" y="500" width="120" height="170" fill="none" stroke="var(--green-dark)" stroke-width="4"/>
-                  <circle cx="636" cy="585" r="5" fill="var(--brass)"/>
+                  <rect x="540" y="300" width="120" height="170" fill="var(--green)"/>
+                  <rect x="540" y="300" width="120" height="170" fill="none" stroke="var(--green-dark)" stroke-width="4"/>
+                  <circle cx="636" cy="385" r="5" fill="var(--brass)"/>
                 </g>
-                <rect class="chip-bg" x="535" y="470" width="130" height="24" rx="12" fill="var(--cream)"/>
-                <text class="chip" x="600" y="486" text-anchor="middle">Вход · на главную</text>
+                <text x="600" y="282" text-anchor="middle" font-family="Astrum, sans-serif" font-size="21" letter-spacing="2" fill="var(--cream)">заходи</text>
+                <rect class="chip-bg" x="535" y="240" width="130" height="24" rx="12" fill="var(--cream)"/>
+                <text class="chip" x="600" y="256" text-anchor="middle">Вход · на главную</text>
               </g>
             </svg>
           </div>
@@ -488,7 +506,7 @@
               <g class="hotspot" tabindex="0" role="button" data-href="science.html"
                  data-title="Лаборатория"
                  data-desc="Разборы клинических исследований по дерматологии и психодерматологии. Разбивка по частям тела — следующий шаг."
-                 data-target="Наука">
+                 data-target="Статьи">
                 <rect class="pick" x="880" y="260" width="240" height="320"/>
                 <circle class="glow" cx="1000" cy="400" r="190" fill="url(#lamp2)"/>
                 <g class="lift" stroke="#eef1f2" stroke-width="3" fill="none">
@@ -530,7 +548,7 @@
       </div>
     </section>
 
-    <p class="floor-note"><b>Конструктор аромата и разбивка лаборатории по частям тела</b> ещё в разработке — сейчас оба ведут на страницы «Мастерская» и «Наука» целиком. Это следующий шаг.</p>
+    <p class="floor-note"><b>Конструктор аромата и разбивка лаборатории по частям тела</b> ещё в разработке — сейчас оба ведут на страницы «Мастерская» и «Статьи» целиком. Это следующий шаг.</p>
   </div>
 </div>
 

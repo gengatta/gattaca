@@ -101,12 +101,12 @@ p { margin: 0 0 1em; color: var(--color-text); }
 
 .brand span {
   display: block;
-  font-family: var(--font-sans);
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
+  font-family: "Astrum", var(--font-sans);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-soft);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .nav-links {
@@ -160,6 +160,74 @@ p { margin: 0 0 1em; color: var(--color-text); }
   font-size: 1.2rem;
   cursor: pointer;
 }
+
+.nav-wrap.force-collapsed .nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: 38px;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.nav-wrap.force-collapsed .nav-links {
+  position: absolute;
+  top: 58px;
+  left: 0;
+  right: 0;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-line);
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 24px 20px;
+  display: none;
+  z-index: 60;
+}
+.nav-wrap.force-collapsed .nav-links.open { display: flex; }
+.nav-wrap.force-collapsed .nav-links li { border-bottom: 1px solid var(--color-line); }
+.nav-wrap.force-collapsed .nav-links a { display: block; padding: 14px 0; }
+
+.nav-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-soft);
+  font-weight: 600;
+  padding: 14px 0 6px !important;
+  border-bottom: none !important;
+}
+
+/* ---------- cookie banner ---------- */
+
+.cookie-bar {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 36px -16px rgba(42, 29, 18, 0.4);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  z-index: 200;
+}
+.cookie-bar p {
+  flex: 1;
+  min-width: 240px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+  line-height: 1.5;
+}
+.cookie-bar button { flex-shrink: 0; }
 
 @media (max-width: 980px) {
   .nav-toggle { display: block; }

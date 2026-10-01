@@ -29,4 +29,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const yearEl = document.querySelector("[data-year]");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  try {
+    if (!localStorage.getItem("vion-cookie-ok")) {
+      const bar = document.createElement("div");
+      bar.className = "cookie-bar";
+      bar.innerHTML =
+        '<p>Этот сайт использует cookies. Мы запоминаем ваши действия и предпочтения, чтобы сделать использование сайта удобнее. Нажмите «ОК», если соглашаетесь с условиями их обработки. Вы всегда можете запретить обработку cookies через браузер.</p>' +
+        '<button class="btn btn-primary" type="button">ОК</button>';
+      document.body.appendChild(bar);
+      bar.querySelector("button").addEventListener("click", () => {
+        try { localStorage.setItem("vion-cookie-ok", "1"); } catch (e) {}
+        bar.remove();
+      });
+    }
+  } catch (e) {
+    /* localStorage unavailable — skip the banner rather than break the page */
+  }
 });
