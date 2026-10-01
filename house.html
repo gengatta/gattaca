@@ -144,7 +144,7 @@
       <div class="layout">
         <div class="scene-frame">
           <div class="scene-scroll">
-            <svg viewBox="0 0 1200 700" role="img" aria-label="Иллюстрация первого этажа VION: слева мастерская KAER, справа кафе со столиками у окон, книжным шкафом и потайной дверью, вход по центру, лестница наверх">
+            <svg viewBox="0 0 1420 700" role="img" aria-label="Иллюстрация первого этажа VION: слева мастерская KAER, справа кафе со столиками у окон и книжным шкафом, за потайной дверью — кабинет с рабочим столом, вход по центру, лестница наверх">
               <defs>
                 <radialGradient id="lamp" cx="50%" cy="20%" r="80%">
                   <stop offset="0%" stop-color="var(--glow)" stop-opacity="0.5"/>
@@ -383,6 +383,40 @@
                 <path d="M1130 300 A36 36 0 0 0 1130 260" stroke="var(--cream)" stroke-width="1.5" fill="none" opacity="0.5"/>
                 <rect class="chip-bg" x="1000" y="340" width="150" height="24" rx="12" fill="var(--cream)"/>
                 <text class="chip" x="1075" y="356" text-anchor="middle">Потайная дверь →</text>
+              </g>
+
+              <!-- room glimpsed through the secret door -->
+              <rect x="1195" y="0" width="225" height="700" fill="var(--wall-dark)"/>
+              <rect x="1195" y="470" width="225" height="230" fill="#4a3526"/>
+              <g stroke="#3a2a1c" stroke-width="2" opacity="0.5">
+                <line x1="1195" y1="520" x2="1420" y2="520"/>
+                <line x1="1195" y1="580" x2="1420" y2="580"/>
+                <line x1="1195" y1="640" x2="1420" y2="640"/>
+              </g>
+              <rect x="1192" y="140" width="10" height="330" fill="var(--wood)"/>
+
+              <text x="1307" y="110" text-anchor="middle" font-family="Cinzel, serif" font-size="22" font-weight="600" fill="var(--cream)">Кабинет</text>
+              <text x="1307" y="128" text-anchor="middle" font-size="11" letter-spacing="2" fill="var(--rose)">СТАТЬИ И МЫСЛИ</text>
+
+              <circle class="ambient-glow" cx="1370" cy="220" r="90" fill="url(#lamp)"/>
+
+              <g class="hotspot" tabindex="0" role="button" data-href="kabinet.html"
+                 data-title="Рабочий стол"
+                 data-desc="Черновики, цитаты и то, что сейчас пишется — ссылки на все статьи кабинета."
+                 data-target="Кабинет">
+                <rect class="pick" x="1225" y="380" width="170" height="150"/>
+                <circle class="glow" cx="1310" cy="440" r="110" fill="url(#lamp)"/>
+                <g class="lift">
+                  <rect x="1240" y="430" width="140" height="12" fill="var(--wood)"/>
+                  <rect x="1250" y="442" width="8" height="40" fill="var(--wood-light)"/>
+                  <rect x="1362" y="442" width="8" height="40" fill="var(--wood-light)"/>
+                  <rect x="1255" y="408" width="30" height="20" fill="var(--cream)" opacity="0.85"/>
+                  <rect x="1290" y="414" width="22" height="14" fill="var(--cream)" opacity="0.7"/>
+                  <path d="M1345 430 L1345 400 L1360 392 L1360 430 Z" fill="none" stroke="var(--brass)" stroke-width="2.5"/>
+                  <line x1="1352" y1="392" x2="1352" y2="380" stroke="var(--brass)" stroke-width="2.5"/>
+                </g>
+                <rect class="chip-bg" x="1235" y="352" width="150" height="24" rx="12" fill="var(--cream)"/>
+                <text class="chip" x="1310" y="368" text-anchor="middle">Стол · статьи и мысли</text>
               </g>
 
               <g class="hotspot" tabindex="0" role="button" data-href="index.html"
