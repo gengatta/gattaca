@@ -88,21 +88,22 @@ p { margin: 0 0 1em; color: var(--color-text); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 76px;
+  height: 58px;
 }
 
 .brand {
   font-family: var(--font-serif);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.04em;
+  line-height: 1.1;
 }
 
 .brand span {
   display: block;
   font-family: var(--font-sans);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-soft);
   font-weight: 500;
@@ -164,7 +165,7 @@ p { margin: 0 0 1em; color: var(--color-text); }
   .nav-toggle { display: block; }
   .nav-links {
     position: absolute;
-    top: 76px;
+    top: 58px;
     left: 0;
     right: 0;
     background: var(--color-bg);
@@ -198,29 +199,35 @@ p { margin: 0 0 1em; color: var(--color-text); }
 
 /* ---------- floating house button ---------- */
 
-.fab-house {
-  position: fixed;
-  right: 20px;
-  bottom: 16px;
-  width: 108px;
-  height: 108px;
+.hero-house {
   display: block;
-  filter: drop-shadow(0 10px 16px rgba(42, 29, 18, 0.35));
-  transition: transform 0.2s ease;
-  z-index: 50;
+  width: 300px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 14px 20px rgba(42, 29, 18, 0.3));
+  transition: transform 0.2s ease, opacity 0.1s linear;
+  align-self: center;
 }
-.fab-house:hover { transform: translateY(-4px) scale(1.04); }
-.fab-house svg { width: 100%; height: 100%; display: block; }
+.hero-house:hover { transform: translateY(-4px) scale(1.03); }
+.hero-house svg { width: 100%; height: 100%; display: block; }
 
-@media (max-width: 560px) {
-  .fab-house { width: 78px; height: 78px; right: 14px; bottom: 12px; }
+@media (max-width: 860px) {
+  .hero-house { width: 220px; margin: 0 auto; }
 }
 
 /* ---------- hero ---------- */
 
 .hero {
-  padding: 72px 0 56px;
+  padding: 48px 0 56px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
 }
+
+@media (max-width: 860px) {
+  .hero { flex-direction: column; }
+}
+
+.hero-text { flex: 1; min-width: 0; }
 
 .hero .lede { margin-top: 18px; }
 

@@ -35,13 +35,27 @@
 
 <main>
   <section class="hero wrap">
-    <span class="eyebrow">Наука · дом · ремесло · внимание к деталям</span>
-    <h1>О науке, доме и внимании к деталям</h1>
-    <p class="lede">Клинические исследования, особенно дерматология и психодерматология, — рядом с рецептами, заметками о доме и мастерской KAER. Один журнал, одна логика: смотреть внимательно.</p>
-    <div class="hero-actions">
-      <a class="btn btn-primary" href="journal.html">Читать журнал</a>
-      <a class="btn btn-ghost" href="candles.html">Посмотреть мастерскую</a>
+    <div class="hero-text">
+      <span class="eyebrow">Наука · дом · ремесло · внимание к деталям</span>
+      <h1>О науке, доме и внимании к деталям</h1>
+      <p class="lede">Клинические исследования, особенно дерматология и психодерматология, — рядом с рецептами, заметками о доме и мастерской KAER. Один журнал, одна логика: смотреть внимательно.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="journal.html">Читать журнал</a>
+        <a class="btn btn-ghost" href="candles.html">Посмотреть мастерскую</a>
+      </div>
     </div>
+    <a class="hero-house" id="heroHouse" href="house.html" aria-label="Зайти в дом VION" title="Зайти в дом VION">
+      <svg viewBox="0 0 100 100">
+        <ellipse cx="50" cy="90" rx="34" ry="5" fill="#2a1d12" opacity="0.18"/>
+        <rect x="14" y="30" width="72" height="56" rx="3" fill="#355a3e"/>
+        <rect x="14" y="30" width="72" height="11" fill="#24381f"/>
+        <rect x="14" y="30" width="72" height="3" fill="#f6da8d" opacity="0.8"/>
+        <path d="M26 86v-18a6.5 6.5 0 0 1 13 0v18z" fill="#f6da8d"/>
+        <path d="M61 86v-18a6.5 6.5 0 0 1 13 0v18z" fill="#f6da8d"/>
+        <rect x="42" y="72" width="14" height="24" rx="2" fill="#1f2f22"/>
+        <circle cx="52.5" cy="84" r="1.4" fill="#f6da8d"/>
+      </svg>
+    </a>
   </section>
 
   <section class="section wrap" style="border-top:none;">
@@ -212,20 +226,21 @@
   </div>
 </footer>
 
-<a class="fab-house" href="house.html" aria-label="Зайти в дом VION" title="Зайти в дом VION">
-  <svg viewBox="0 0 100 100">
-    <ellipse cx="50" cy="90" rx="34" ry="5" fill="#2a1d12" opacity="0.18"/>
-    <rect x="18" y="38" width="64" height="48" rx="3" fill="#355a3e"/>
-    <rect x="18" y="38" width="64" height="11" fill="#24381f"/>
-    <rect x="18" y="38" width="64" height="3" fill="#f6da8d" opacity="0.8"/>
-    <path d="M20 14 L50 36 L80 14" fill="none" stroke="#24381f" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M30 76v-16a6 6 0 0 1 12 0v16z" fill="#f6da8d"/>
-    <path d="M58 76v-16a6 6 0 0 1 12 0v16z" fill="#f6da8d"/>
-    <rect x="44" y="64" width="12" height="22" rx="2" fill="#1f2f22"/>
-    <circle cx="53.5" cy="75" r="1.3" fill="#f6da8d"/>
-  </svg>
-</a>
-
 <script src="assets/js/main.js"></script>
+<script>
+(function(){
+  var house = document.getElementById('heroHouse');
+  if (!house) return;
+  var fadeDistance = 420;
+  function onScroll(){
+    var y = window.scrollY || window.pageYOffset;
+    var opacity = Math.max(0, 1 - y / fadeDistance);
+    house.style.opacity = opacity;
+    house.style.pointerEvents = opacity < 0.05 ? 'none' : 'auto';
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
 </body>
 </html>
