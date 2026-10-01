@@ -3,16 +3,16 @@
    ========================================================= */
 
 :root {
-  --color-bg: #faf7f2;
-  --color-bg-alt: #f1ece1;
-  --color-surface: #ffffff;
-  --color-text: #2b2a26;
-  --color-text-soft: #6b6459;
-  --color-line: #e3dccd;
-  --color-accent: #59684c;       /* шалфейно-зелёный — наука/дом */
-  --color-accent-soft: #dfe6d7;
-  --color-accent-2: #b5652d;     /* терракотовый — свечи/тепло */
-  --color-accent-2-soft: #f2e0d1;
+  --color-bg: #f6efe1;
+  --color-bg-alt: #efe4cf;
+  --color-surface: #fffaf0;
+  --color-text: #2b2621;
+  --color-text-soft: #6e6456;
+  --color-line: #e3d7bd;
+  --color-accent: #4f6b86;       /* пыльно-синий — наука/журнал */
+  --color-accent-soft: #e1e9ee;
+  --color-accent-2: #b0616a;     /* KAER — свечи/тепло */
+  --color-accent-2-soft: #f3e1e3;
   --font-serif: "Fraunces", Georgia, serif;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --radius: 14px;
@@ -110,12 +110,26 @@ p { margin: 0 0 1em; color: var(--color-text); }
 
 .nav-links {
   display: flex;
-  gap: 32px;
+  gap: 22px;
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 0.95rem;
+  font-size: 0.89rem;
 }
+
+.house-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-accent-2);
+  border: 1px solid var(--color-accent-2);
+  padding: 8px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.house-cta:hover { background: var(--color-accent-2); color: #fff; }
 
 .nav-links a {
   padding: 6px 0;
@@ -127,6 +141,12 @@ p { margin: 0 0 1em; color: var(--color-text); }
 .nav-links a[aria-current="page"] {
   border-color: var(--color-accent);
   color: var(--color-accent);
+}
+
+.nav-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .nav-toggle {
@@ -456,6 +476,65 @@ p { margin: 0 0 1em; color: var(--color-text); }
   font-size: 0.92rem;
   color: var(--color-text-soft);
 }
+
+/* ---------- thumb (news cards) ---------- */
+
+.entry-card .thumb {
+  height: 100px;
+  border-radius: calc(var(--radius) - 6px);
+  margin-bottom: 14px;
+  background: linear-gradient(155deg, var(--color-accent-soft), var(--color-accent-2-soft));
+}
+
+/* ---------- projects ---------- */
+
+.project-block {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 780px) {
+  .project-block { grid-template-columns: 1fr; }
+}
+
+.project-block .thumb {
+  border-radius: var(--radius);
+  background: linear-gradient(155deg, var(--color-accent-soft), var(--color-accent-2-soft));
+  min-height: 140px;
+}
+
+.tool-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.tool-list li {
+  border-top: 1px solid var(--color-line);
+  padding-top: 10px;
+  font-size: 0.92rem;
+  color: var(--color-text-soft);
+}
+
+/* ---------- stub / coming soon ---------- */
+
+.stub {
+  text-align: center;
+  padding: 100px 0 120px;
+}
+
+.stub .eyebrow { justify-content: center; }
+
+.stub h1 { max-width: 560px; margin-left: auto; margin-right: auto; }
+
+.stub p.lede { margin-left: auto; margin-right: auto; }
 
 /* ---------- footer ---------- */
 
