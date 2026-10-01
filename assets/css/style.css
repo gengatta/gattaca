@@ -179,6 +179,43 @@ p { margin: 0 0 1em; color: var(--color-text); }
   .nav-links a { display: block; padding: 14px 0; }
 }
 
+/* ---------- back button ---------- */
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 18px 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  cursor: pointer;
+}
+.back-btn:hover { color: var(--color-accent); }
+
+/* ---------- floating house button ---------- */
+
+.fab-house {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-accent-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 26px -10px rgba(42, 29, 18, 0.5);
+  transition: transform 0.2s ease;
+  z-index: 50;
+}
+.fab-house:hover { transform: scale(1.08); }
+.fab-house svg { width: 28px; height: 28px; }
+
 /* ---------- hero ---------- */
 
 .hero {
