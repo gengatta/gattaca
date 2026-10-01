@@ -267,13 +267,29 @@ p { margin: 0 0 1em; color: var(--color-text); }
 
 /* ---------- floating house button ---------- */
 
+.hero-house-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  align-self: center;
+}
+
+.hero-house-label {
+  font-family: "Cinzel", Georgia, serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-2);
+  font-weight: 600;
+}
+
 .hero-house {
   display: block;
   width: 300px;
-  flex-shrink: 0;
   filter: drop-shadow(0 14px 20px rgba(42, 29, 18, 0.3));
   transition: transform 0.2s ease, opacity 0.1s linear;
-  align-self: center;
 }
 .hero-house:hover { transform: translateY(-4px) scale(1.03); }
 .hero-house svg { width: 100%; height: 100%; display: block; }
