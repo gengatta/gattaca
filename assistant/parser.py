@@ -1,19 +1,24 @@
-"""Разбор событий из обычного текста на русском.
+"""Разбор событий и задач из обычного текста на русском — без нейросети.
 
 Примеры, которые понимает парсер:
     25.10 18:30 Стоматолог
-    Стоматолог 25.10.2026 в 18:30
     завтра в 10:00 созвон с Анной
     в пятницу 15:00 маникюр
     через 2 часа забрать посылку
-    послезавтра день рождения мамы      (без времени -> DEFAULT_TIME)
+    созвон в 10:00 по Нью-Йорку            (время в другом поясе)
+    сдать эссе до пятницы                  (задача с дедлайном)
+    #учеба отчёт по лабе к 25.10           (тег направления)
+    задача: разобрать почту                (задача без срока — во «входящие»)
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
+
+from . import zones
 
 
 class ParseError(ValueError):
@@ -26,14 +31,15 @@ class ParsedEvent:
     starts_at: datetime  # aware, в часовом поясе пользователя
 
 
+# Дни недели во всех нужных падежах: «в пятницу», «до пятницы», «к пятнице»
 WEEKDAYS = {
-    0: r"понедельник|пн",
-    1: r"вторник|вт",
-    2: r"сред[ау]|ср",
-    3: r"четверг|чт",
-    4: r"пятниц[ау]|пт",
-    5: r"суббот[ау]|сб",
-    6: r"воскресенье|вс",
+    0: r"понедельник[ауе]?|пн",
+    1: r"вторник[ауе]?|вт",
+    2: r"сред[ауые]|ср",
+    3: r"четверг[ауе]?|чт",
+    4: r"пятниц[ауые]|пт",
+    5: r"суббот[ауые]|сб",
+    6: r"воскресень[еяю]|вс",
 }
 
 RELATIVE_DAYS = {"сегодня": 0, "завтра": 1, "послезавтра": 2}
@@ -50,41 +56,38 @@ UNITS = {
 # \b в Python работает с кириллицей, но «в» и «через» нужно отделять явно
 _B = r"(?<![\w])"
 _E = r"(?![\w])"
+# «до пятницы», «к 25.10», «дедлайн 18:00» — признак задачи с дедлайном
+_DL = r"(?:(до|к|дедлайн:?|deadline:?|срок:?)\s+)?"
 
 RE_IN = re.compile(
     _B + r"через\s+(?:(\d+)\s+)?(минут[уы]?|мин|час(?:а|ов)?|дн(?:я|ей)|день|недел[юиь])" + _E,
     re.IGNORECASE,
 )
-RE_DATE = re.compile(_B + r"(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?" + _E)
-RE_ISO = re.compile(_B + r"(\d{4})-(\d{2})-(\d{2})" + _E)
-RE_REL = re.compile(_B + r"(" + "|".join(RELATIVE_DAYS) + r")" + _E, re.IGNORECASE)
+RE_DATE = re.compile(_B + _DL + r"(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?" + _E, re.IGNORECASE)
+RE_ISO = re.compile(_B + _DL + r"(\d{4})-(\d{2})-(\d{2})" + _E, re.IGNORECASE)
+RE_REL = re.compile(_B + _DL + r"(" + "|".join(RELATIVE_DAYS) + r")" + _E, re.IGNORECASE)
 RE_WEEKDAY = re.compile(
-    _B + r"(?:во?\s+)?(" + "|".join(WEEKDAYS.values()) + r")" + _E, re.IGNORECASE
+    _B + r"(?:(до|к|дедлайн:?|deadline:?|срок:?)\s+|во?\s+)?(" + "|".join(WEEKDAYS.values()) + r")" + _E,
+    re.IGNORECASE,
 )
-RE_TIME = re.compile(_B + r"(?:в\s+)?([01]?\d|2[0-3])[:](\d{2})" + _E, re.IGNORECASE)
-
-
-def _cut(text: str, m: re.Match) -> str:
-    return text[: m.start()] + " " + text[m.end():]
-
-
-def _unit(word: str) -> timedelta:
-    word = word.lower()
-    for prefix, delta in UNITS.items():
-        if word.startswith(prefix):
-            return delta
-    raise ParseError(f"Не понимаю единицу времени «{word}»")
+RE_TIME = re.compile(_B + r"(?:(до|к)\s+|в\s+)?([01]?\d|2[0-3])[:](\d{2})" + _E, re.IGNORECASE)
+RE_TAG = re.compile(r"(?<![\w#])#([\w]+)")
+RE_TASK_PREFIX = re.compile(r"^\s*(?:задача|задачу|todo|task|сделать|дедлайн|deadline)\s*[:\-—]\s*", re.IGNORECASE)
+TASK_TAGS = {"задача", "задачи", "todo", "task", "дедлайн"}
 
 
 @dataclass
 class Draft:
-    """Черновик события: дата или время могут быть ещё неизвестны."""
+    """Черновик события/задачи: дата или время могут быть ещё неизвестны."""
 
     title: str
     day: date | None = None
     at: time | None = None
     source: str | None = None  # откуда взялась дата: exact / no_year / relative / weekday
     starts_at: datetime | None = None  # уже готовый момент («через 2 часа»)
+    kind: str = "event"  # event — встреча в конкретное время, task — задача с дедлайном или без
+    tz: str | None = None  # пояс, в котором указано время («по Нью-Йорку»), None — свой
+    tags: list[str] = field(default_factory=list)
 
     @property
     def found_anything(self) -> bool:
@@ -92,37 +95,58 @@ class Draft:
 
     @property
     def missing(self) -> str | None:
-        """Чего не хватает, чтобы сохранить событие: 'date', 'time' или None."""
-        if self.starts_at or self.at and self.day:
+        """Чего не хватает, чтобы сохранить: 'date', 'time' или None.
+
+        Задаче хватает одной даты (дедлайн — конец дня), а задача совсем без срока
+        уходит во «входящие». Встрече нужны и день, и время (только время — значит,
+        сегодня или завтра).
+        """
+        if self.kind == "task" or self.starts_at or self.at:
             return None
-        if self.at and not self.day:
-            return None  # только время — значит, сегодня/завтра
-        if self.day and not self.at:
+        if self.day:
             return "time"
         return "date"
 
 
 def extract(text: str, now: datetime) -> Draft:
-    """Достаёт дату/время из текста; всё остальное становится названием (может быть пустым).
+    """Достаёт дату/время/пояс/теги из текста; остальное — название (может быть пустым).
 
     `now` должен быть aware datetime в часовом поясе пользователя.
     """
     rest = text.strip()
+    draft = Draft("")
 
-    # 1. «через N часов» — сразу готовый момент
+    # 0. Теги и явные пометки задачи
+    draft.tags = [t.lower() for t in RE_TAG.findall(rest)]
+    rest = RE_TAG.sub(" ", rest)
+    if any(t in TASK_TAGS for t in draft.tags):
+        draft.kind = "task"
+        draft.tags = [t for t in draft.tags if t not in TASK_TAGS]
+    if m := RE_TASK_PREFIX.match(rest):
+        draft.kind = "task"
+        rest = rest[m.end():]
+
+    # 1. Часовой пояс: «по Нью-Йорку» — дальше считаем время в нём
+    if found := zones.find_zone(rest):
+        zone, m = found
+        if zone != str(now.tzinfo):
+            draft.tz = zone
+            now = now.astimezone(ZoneInfo(zone))
+        rest = _cut(rest, m)
+
+    # 2. «через N часов» — сразу готовый момент
     if m := RE_IN.search(rest):
         amount = int(m.group(1) or 1)
-        starts_at = (now + amount * _unit(m.group(2))).replace(second=0, microsecond=0)
-        return Draft(_clean(_cut(rest, m)), starts_at=starts_at)
+        draft.starts_at = (now + amount * _unit(m.group(2))).replace(second=0, microsecond=0)
+        draft.title = _clean(_cut(rest, m))
+        return draft
 
-    draft = Draft("")
-    # 2. Дата
+    # 3. Дата
     if m := RE_ISO.search(rest):
-        draft.day = _safe_date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        draft.day = _safe_date(int(m.group(2)), int(m.group(3)), int(m.group(4)))
         draft.source = "exact"
-        rest = _cut(rest, m)
     elif m := RE_DATE.search(rest):
-        d, mo, y = int(m.group(1)), int(m.group(2)), m.group(3)
+        d, mo, y = int(m.group(2)), int(m.group(3)), m.group(4)
         if y:
             year = int(y) + (2000 if len(y) == 2 else 0)
             draft.source = "exact"
@@ -130,21 +154,24 @@ def extract(text: str, now: datetime) -> Draft:
             year = now.year
             draft.source = "no_year"
         draft.day = _safe_date(year, mo, d)
-        rest = _cut(rest, m)
     elif m := RE_REL.search(rest):
-        draft.day = now.date() + timedelta(days=RELATIVE_DAYS[m.group(1).lower()])
+        draft.day = now.date() + timedelta(days=RELATIVE_DAYS[m.group(2).lower()])
         draft.source = "relative"
-        rest = _cut(rest, m)
     elif m := RE_WEEKDAY.search(rest):
-        word = m.group(1).lower()
+        word = m.group(2).lower()
         target = next(i for i, pat in WEEKDAYS.items() if re.fullmatch(pat, word))
         draft.day = now.date() + timedelta(days=(target - now.weekday()) % 7)
         draft.source = "weekday"
+    if m:
+        if m.group(1):
+            draft.kind = "task"
         rest = _cut(rest, m)
 
-    # 3. Время
+    # 4. Время
     if m := RE_TIME.search(rest):
-        draft.at = time(int(m.group(1)), int(m.group(2)))
+        draft.at = time(int(m.group(2)), int(m.group(3)))
+        if m.group(1):
+            draft.kind = "task"
         rest = _cut(rest, m)
 
     draft.title = _clean(rest)
@@ -158,14 +185,29 @@ def looks_like_schedule(text: str) -> bool:
     return dates > 1 or len(RE_TIME.findall(text)) > 1
 
 
-def finalize(draft: Draft, now: datetime, default_time: time | None = None) -> datetime:
-    """Превращает черновик в конкретный момент. ParseError, если данных не хватает."""
-    tz = now.tzinfo
+DEADLINE_TIME = time(23, 59)
+
+
+def finalize(draft: Draft, now: datetime, default_time: time | None = None) -> datetime | None:
+    """Превращает черновик в конкретный момент (aware).
+
+    None — задача без срока («входящие»). ParseError, если данных не хватает
+    или время уже прошло.
+    """
     if draft.starts_at:
         return draft.starts_at
-    day, at = draft.day, draft.at or default_time
-    if at is None:
-        raise ParseError("Не указано время")
+    if draft.tz:
+        now = now.astimezone(ZoneInfo(draft.tz))
+    tz = now.tzinfo
+    day, at = draft.day, draft.at
+    if draft.kind == "task":
+        if day is None and at is None:
+            return None
+        at = at or DEADLINE_TIME  # дедлайн без времени — до конца дня
+    else:
+        at = at or default_time
+        if at is None:
+            raise ParseError("Не указано время")
     if day is None:
         if draft.at is None:
             raise ParseError("Не нашла дату или время")
@@ -187,6 +229,11 @@ def finalize(draft: Draft, now: datetime, default_time: time | None = None) -> d
     return starts_at
 
 
+def is_all_day(draft: Draft) -> bool:
+    """Задача с дедлайном «до такого-то дня» без конкретного времени."""
+    return draft.kind == "task" and draft.at is None and draft.starts_at is None
+
+
 def parse_event(text: str, now: datetime, default_time: time = time(9, 0)) -> ParsedEvent:
     """Одно событие из текста целиком; без времени ставит default_time."""
     if not text.strip():
@@ -198,6 +245,18 @@ def parse_event(text: str, now: datetime, default_time: time = time(9, 0)) -> Pa
     if not draft.title:
         raise ParseError("Не указано, что за событие")
     return ParsedEvent(draft.title, starts_at)
+
+
+def _cut(text: str, m: re.Match) -> str:
+    return text[: m.start()] + " " + text[m.end():]
+
+
+def _unit(word: str) -> timedelta:
+    word = word.lower()
+    for prefix, delta in UNITS.items():
+        if word.startswith(prefix):
+            return delta
+    raise ParseError(f"Не понимаю единицу времени «{word}»")
 
 
 def _safe_date(y: int, m: int, d: int) -> date:
@@ -215,7 +274,7 @@ def _safe_datetime(dt: datetime, year: int) -> datetime:
 
 
 def _clean(rest: str) -> str:
-    title = re.sub(r"\s+", " ", rest).strip(" ,.-—:")
+    title = re.sub(r"\s+", " ", rest).strip(" ,.-—:()")
     return title[:1].upper() + title[1:]
 
 
@@ -244,17 +303,16 @@ def format_offset(delta: timedelta) -> str:
         return "в момент начала"
     if minutes % 1440 == 0:
         n = minutes // 1440
-        return f"за {n} {_plural(n, 'день', 'дня', 'дней')}"
+        return f"за {n} {plural(n, 'день', 'дня', 'дней')}"
     if minutes % 60 == 0:
         n = minutes // 60
-        return f"за {n} {_plural(n, 'час', 'часа', 'часов')}"
-    return f"за {minutes} {_plural(minutes, 'минуту', 'минуты', 'минут')}"
+        return f"за {n} {plural(n, 'час', 'часа', 'часов')}"
+    return f"за {minutes} {plural(minutes, 'минуту', 'минуты', 'минут')}"
 
 
-def _plural(n: int, one: str, few: str, many: str) -> str:
+def plural(n: int, one: str, few: str, many: str) -> str:
     if n % 10 == 1 and n % 100 != 11:
         return one
     if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
         return few
     return many
-

@@ -74,6 +74,9 @@ class Harness:
         config.allowed = {KASIA}
         config.default_offsets = "1d,1h,0m"
         config.default_digest = "08:00"
+        config.default_weekly = "19:00"
+        config.task_offsets = "2d,1d,0d"
+        config.task_time = time(10, 0)
         config.ai_enabled = ai
         self.log = []
         self.extractor = FakeExtractor()
@@ -205,10 +208,97 @@ def test_reminders_go_to_every_member(h):
     invite_mom(h)
     now = datetime.now(timezone.utc)
     ev = h.db.add_event(KASIA, "Ужин", now + timedelta(minutes=30), now - timedelta(hours=2))
-    h.db.add_member(ev.id, KASIA, [timedelta(hours=1)], now - timedelta(hours=2))
-    h.db.add_member(ev.id, MOM, [timedelta(hours=1)], now - timedelta(hours=2))
+    h.db.add_member(ev.id, KASIA, [now - timedelta(minutes=30)])
+    h.db.add_member(ev.id, MOM, [now - timedelta(minutes=30)])
     before = len(h.log)
     asyncio.run(bot.job_reminders(h.ctx()))
     sent = h.log[before:]
     assert sorted(c for c, _, _ in sent) == [KASIA, MOM]
     assert any(c == MOM and "поставила Катаржина" in t for c, t, _ in sent)
+
+
+def first_id(text):
+    return int(text.split("<b>#")[1].split("<")[0])
+
+
+def test_task_with_deadline_and_done(h):
+    day = datetime.now(TZ).date() + timedelta(days=3)
+    out = h.text(KASIA, f"сдать эссе к {day:%d.%m}")
+    assert "Записала задачу" in out[0][1] and "🎓" in out[0][1]
+    assert "Напомню:" in out[0][1]
+    task_id = first_id(out[0][1])
+
+    # три напоминания, все в 10:00 по её времени
+    due = h.db.due_reminders(datetime.now(timezone.utc) + timedelta(days=10))
+    assert len(due) == 3
+    rows = h.db.db.execute("SELECT remind_at FROM reminders WHERE event_id = ?", (task_id,)).fetchall()
+    assert {datetime.fromisoformat(r[0]).astimezone(TZ).time() for r in rows} == {time(10, 0)}
+
+    out = h.run(bot.cmd_tasks, KASIA)
+    assert "Сдать эссе" in out[0][1] and f"dn:{task_id}" in buttons(out[0])
+
+    h.press(KASIA, f"dn:{task_id}")
+    assert h.db.get_event(task_id).done_at is not None
+    out = h.run(bot.cmd_tasks, KASIA)
+    assert "Задач со сроком нет" in out[0][1]
+    assert "Сделано за неделю: <b>1</b>" in bot.weekly_text(h.ctx(), KASIA)
+
+
+def test_inbox_and_planning(h):
+    out = h.text(KASIA, "задача: разобрать почту")
+    assert "Во «входящих»" in out[0][1]
+    task_id = first_id(out[0][1])
+
+    out = h.run(bot.cmd_inbox, KASIA)
+    assert "Разобрать почту" in out[0][1] and f"pl:{task_id}" in buttons(out[0])
+
+    out = h.press(KASIA, f"pl:{task_id}")
+    assert "Какой срок" in out[-1][1]
+    out = h.text(KASIA, "завтра")
+    assert "Вот что я поняла" in out[-1][1]
+    h.press(KASIA, "b:save")
+    assert h.db.inbox(KASIA) == []
+    assert h.db.get_event(task_id).starts_at is not None
+    assert "#" in h.run(bot.cmd_tasks, KASIA)[0][1]
+
+
+def test_no_date_goes_to_inbox_by_button(h):
+    out = h.text(KASIA, "купить подарок маме")
+    assert "q:inbox" in buttons(out[0])
+    out = h.press(KASIA, "q:inbox")
+    assert "без срока" in out[-1][1]
+    h.press(KASIA, "b:save")
+    assert [e.title for e in h.db.inbox(KASIA)] == ["Купить подарок маме"]
+
+
+def test_timezones_and_area_button(h):
+    out = h.run(bot.cmd_tz, KASIA, args=["Москва"])
+    assert "Мск" in out[0][1]
+    out = h.text(KASIA, "созвон с клиентом в 10:00 по Нью-Йорку")
+    text = out[0][1]
+    assert "(10:00 NY)" in text and "🇺🇸" in text
+    event_id = first_id(text)
+    local = h.db.get_event(event_id).starts_at.astimezone(ZoneInfo("Europe/Moscow"))
+    assert local.hour == 17  # 10:00 NY = 17:00 Мск (в октябре)
+
+    out = h.press(KASIA, f"ar:{event_id}")
+    assert f"as:{event_id}:2" in buttons(out[-1])
+    h.press(KASIA, f"as:{event_id}:2")
+    assert h.db.get_event(event_id).area == "Учёба"
+
+
+def test_areas_command(h):
+    h.run(bot.cmd_areas, KASIA, args=["add", "💼", "Фриланс"])
+    out = h.run(bot.cmd_areas, KASIA)
+    assert "💼 Фриланс" in out[0][1]
+    out = h.text(KASIA, "#фриланс завтра 12:00 созвон с заказчиком")
+    assert "💼" in out[0][1]
+    h.run(bot.cmd_areas, KASIA, args=["del", "Фриланс"])
+    assert "💼 Фриланс  <code>" not in h.run(bot.cmd_areas, KASIA)[0][1]
+
+
+def test_digest_groups_by_area(h):
+    h.text(KASIA, "сегодня 23:58 пара по маркетингу")
+    h.text(KASIA, "сегодня 23:59 маникюр")
+    text = bot.digest_text(h.ctx(), KASIA)
+    assert "<b>🎓 Учёба</b>" in text and "<b>🏠 Личное</b>" in text
