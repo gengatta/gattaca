@@ -70,3 +70,17 @@ def test_format_offset():
     assert format_offset(timedelta(hours=3)) == "за 3 часа"
     assert format_offset(timedelta(minutes=15)) == "за 15 минут"
     assert format_offset(timedelta(minutes=21)) == "за 21 минуту"
+
+
+def test_extract_partial():
+    from assistant.parser import extract, looks_like_schedule
+
+    d = extract("послезавтра день рождения мамы", NOW)
+    assert d.title == "День рождения мамы" and d.missing == "time"
+    d = extract("стрижка", NOW)
+    assert d.missing == "date" and not d.found_anything
+    assert extract("в 18:00 позвонить", NOW).missing is None
+    assert looks_like_schedule("пн 9:00 бассейн\nср 15:00 маникюр")
+    assert looks_like_schedule("в пятницу врач, а в субботу стрижка")
+    assert not looks_like_schedule("25.10 18:30 Стоматолог")
+    assert not looks_like_schedule("через 2 часа забрать посылку")

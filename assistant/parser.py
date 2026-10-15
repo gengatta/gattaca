@@ -76,81 +76,128 @@ def _unit(word: str) -> timedelta:
     raise ParseError(f"Не понимаю единицу времени «{word}»")
 
 
-def parse_event(text: str, now: datetime, default_time: time = time(9, 0)) -> ParsedEvent:
-    """Достаёт дату/время из текста; всё остальное становится названием события.
+@dataclass
+class Draft:
+    """Черновик события: дата или время могут быть ещё неизвестны."""
+
+    title: str
+    day: date | None = None
+    at: time | None = None
+    source: str | None = None  # откуда взялась дата: exact / no_year / relative / weekday
+    starts_at: datetime | None = None  # уже готовый момент («через 2 часа»)
+
+    @property
+    def found_anything(self) -> bool:
+        return bool(self.starts_at or self.day or self.at)
+
+    @property
+    def missing(self) -> str | None:
+        """Чего не хватает, чтобы сохранить событие: 'date', 'time' или None."""
+        if self.starts_at or self.at and self.day:
+            return None
+        if self.at and not self.day:
+            return None  # только время — значит, сегодня/завтра
+        if self.day and not self.at:
+            return "time"
+        return "date"
+
+
+def extract(text: str, now: datetime) -> Draft:
+    """Достаёт дату/время из текста; всё остальное становится названием (может быть пустым).
 
     `now` должен быть aware datetime в часовом поясе пользователя.
     """
-    tz = now.tzinfo
     rest = text.strip()
-    if not rest:
-        raise ParseError("Пустое сообщение")
 
     # 1. «через N часов» — сразу готовый момент
-    m = RE_IN.search(rest)
-    if m:
+    if m := RE_IN.search(rest):
         amount = int(m.group(1) or 1)
-        starts_at = now + amount * _unit(m.group(2))
-        rest = _cut(rest, m)
-        return ParsedEvent(_title(rest), starts_at.replace(second=0, microsecond=0))
+        starts_at = (now + amount * _unit(m.group(2))).replace(second=0, microsecond=0)
+        return Draft(_clean(_cut(rest, m)), starts_at=starts_at)
 
+    draft = Draft("")
     # 2. Дата
-    day: date | None = None
-    source = None  # откуда взялась дата — нужно, чтобы понять, как «перескочить» прошлое
     if m := RE_ISO.search(rest):
-        day = _safe_date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-        source = "exact"
+        draft.day = _safe_date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        draft.source = "exact"
         rest = _cut(rest, m)
     elif m := RE_DATE.search(rest):
         d, mo, y = int(m.group(1)), int(m.group(2)), m.group(3)
         if y:
             year = int(y) + (2000 if len(y) == 2 else 0)
-            source = "exact"
+            draft.source = "exact"
         else:
             year = now.year
-            source = "no_year"
-        day = _safe_date(year, mo, d)
+            draft.source = "no_year"
+        draft.day = _safe_date(year, mo, d)
         rest = _cut(rest, m)
     elif m := RE_REL.search(rest):
-        day = now.date() + timedelta(days=RELATIVE_DAYS[m.group(1).lower()])
-        source = "relative"
+        draft.day = now.date() + timedelta(days=RELATIVE_DAYS[m.group(1).lower()])
+        draft.source = "relative"
         rest = _cut(rest, m)
     elif m := RE_WEEKDAY.search(rest):
         word = m.group(1).lower()
         target = next(i for i, pat in WEEKDAYS.items() if re.fullmatch(pat, word))
-        ahead = (target - now.weekday()) % 7
-        day = now.date() + timedelta(days=ahead)
-        source = "weekday"
+        draft.day = now.date() + timedelta(days=(target - now.weekday()) % 7)
+        draft.source = "weekday"
         rest = _cut(rest, m)
 
     # 3. Время
-    at: time | None = None
     if m := RE_TIME.search(rest):
-        at = time(int(m.group(1)), int(m.group(2)))
+        draft.at = time(int(m.group(1)), int(m.group(2)))
         rest = _cut(rest, m)
 
-    if day is None and at is None:
-        raise ParseError("Не нашла дату или время")
+    draft.title = _clean(rest)
+    return draft
 
+
+def looks_like_schedule(text: str) -> bool:
+    """Несколько дат или несколько времён в одном тексте — это расписание, а не одно событие."""
+    dates = len(RE_ISO.findall(text)) or len(RE_DATE.findall(text))
+    dates += sum(len(r.findall(text)) for r in (RE_REL, RE_WEEKDAY, RE_IN))
+    return dates > 1 or len(RE_TIME.findall(text)) > 1
+
+
+def finalize(draft: Draft, now: datetime, default_time: time | None = None) -> datetime:
+    """Превращает черновик в конкретный момент. ParseError, если данных не хватает."""
+    tz = now.tzinfo
+    if draft.starts_at:
+        return draft.starts_at
+    day, at = draft.day, draft.at or default_time
+    if at is None:
+        raise ParseError("Не указано время")
     if day is None:
+        if draft.at is None:
+            raise ParseError("Не нашла дату или время")
         # Только время: сегодня, а если уже прошло — завтра
         day = now.date()
         if datetime.combine(day, at, tz) <= now:
             day += timedelta(days=1)
 
-    starts_at = datetime.combine(day, at or default_time, tz)
-
+    starts_at = datetime.combine(day, at, tz)
     if starts_at <= now:
-        if source == "no_year":
+        if draft.source == "no_year":
             # «25.01» в октябре — значит, в следующем году
             starts_at = _safe_datetime(starts_at, now.year + 1)
-        elif source == "weekday":
+        elif draft.source == "weekday":
             # «в пятницу 9:00», а сегодня пятница и 9:00 уже прошло — следующая неделя
             starts_at += timedelta(weeks=1)
         else:
             raise ParseError("Это время уже прошло")
+    return starts_at
 
-    return ParsedEvent(_title(rest), starts_at)
+
+def parse_event(text: str, now: datetime, default_time: time = time(9, 0)) -> ParsedEvent:
+    """Одно событие из текста целиком; без времени ставит default_time."""
+    if not text.strip():
+        raise ParseError("Пустое сообщение")
+    draft = extract(text, now)
+    if not draft.found_anything:
+        raise ParseError("Не нашла дату или время")
+    starts_at = finalize(draft, now, default_time)
+    if not draft.title:
+        raise ParseError("Не указано, что за событие")
+    return ParsedEvent(draft.title, starts_at)
 
 
 def _safe_date(y: int, m: int, d: int) -> date:
@@ -167,11 +214,9 @@ def _safe_datetime(dt: datetime, year: int) -> datetime:
         raise ParseError("Такой даты в следующем году нет") from e
 
 
-def _title(rest: str) -> str:
+def _clean(rest: str) -> str:
     title = re.sub(r"\s+", " ", rest).strip(" ,.-—:")
-    if not title:
-        raise ParseError("Не указано, что за событие")
-    return title[0].upper() + title[1:]
+    return title[:1].upper() + title[1:]
 
 
 def parse_offsets(spec: str) -> list[timedelta]:
