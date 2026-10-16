@@ -111,11 +111,11 @@ p { margin: 0 0 1em; color: var(--color-text); }
 
 .nav-links {
   display: flex;
-  gap: 16px;
+  gap: 13px;
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 0.84rem;
+  font-size: 0.79rem;
 }
 
 .house-cta {
@@ -229,7 +229,7 @@ p { margin: 0 0 1em; color: var(--color-text); }
 }
 .cookie-bar button { flex-shrink: 0; }
 
-@media (max-width: 980px) {
+@media (max-width: 1060px) {
   .nav-toggle { display: block; }
   .nav-links {
     position: absolute;
@@ -663,6 +663,105 @@ p { margin: 0 0 1em; color: var(--color-text); }
 .stub h1 { max-width: 560px; margin-left: auto; margin-right: auto; }
 
 .stub p.lede { margin-left: auto; margin-right: auto; }
+
+/* ---------- resume ---------- */
+
+.resume-block {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-bottom: 20px;
+}
+
+.resume-block h3 { margin-bottom: 4px; }
+
+.resume-block .meta {
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+  margin-bottom: 12px;
+}
+
+.resume-block ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.94rem;
+  color: var(--color-text-soft);
+}
+.resume-block li { margin-bottom: 4px; }
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+@media (max-width: 620px) { .portfolio-grid { grid-template-columns: 1fr; } }
+
+.portfolio-card {
+  display: block;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.portfolio-card:hover { border-color: var(--color-accent); }
+.portfolio-card .cat {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+.portfolio-card h3 { margin: 6px 0 4px; }
+.portfolio-card p { font-size: 0.9rem; color: var(--color-text-soft); margin: 0; }
+
+@media print {
+  .site-header, .back-btn, .site-footer, .cookie-bar, .no-print { display: none !important; }
+  body { background: #fff; }
+  .wrap { max-width: 100%; }
+}
+
+/* ---------- reviews ---------- */
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+@media (max-width: 700px) { .review-grid { grid-template-columns: 1fr; } }
+
+.review-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+.review-card p.quote {
+  font-size: 1rem;
+  color: var(--color-text);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+.review-card .author {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+}
 
 /* ---------- footer ---------- */
 
